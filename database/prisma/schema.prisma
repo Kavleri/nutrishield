@@ -1,0 +1,72 @@
+﻿datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. WHO Child Growth Standards 2006 (LMS Parameters)
+model WhoAnthroLms {
+  id         Int      @id @default(autoincrement())
+  indicator  String   @db.VarChar(10)      // 'waz', 'haz', 'whz'
+  gender     String   @db.VarChar(10)      // 'male', 'female'
+  ageMonths  Decimal  @map("age_months") @db.Decimal(5, 2)
+  lengthCm   Decimal? @map("length_cm") @db.Decimal(5, 2)
+  lParam     Decimal  @map("l_param") @db.Decimal(10, 6)
+  mParam     Decimal  @map("m_param") @db.Decimal(10, 6)
+  sParam     Decimal  @map("s_param") @db.Decimal(10, 6)
+
+  @@unique([indicator, gender, ageMonths, lengthCm], name: "uq_who_indicator_age")
+  @@index([indicator, gender, ageMonths])
+  @@map("who_anthro_lms")
+}
+
+// 2. Indonesian Food Composition Table (TKPI Kemenkes RI)
+model TkpiFood {
+  foodId        String   @id @map("food_id") @db.VarChar(50)
+  nameId        String   @map("name_id") @db.VarChar(150)
+  commonName    String?  @map("common_name") @db.VarChar(150)
+  category      String   @db.VarChar(50)      // Lauk Hewani, Lauk Nabati, Sayur, Buah, Pokok
+  energyKcal    Decimal  @map("energy_kcal") @db.Decimal(8, 2)
+  proteinG      Decimal  @map("protein_g") @db.Decimal(8, 2)
+  fatG          Decimal  @map("fat_g") @db.Decimal(8, 2)
+  carbsG        Decimal  @map("carbs_g") @db.Decimal(8, 2)
+  calciumMg     Decimal  @default(0) @map("calcium_mg") @db.Decimal(8, 2)
+  ironMg        Decimal  @default(0) @map("iron_mg") @db.Decimal(8, 2)
+  zincMg        Decimal  @default(0) @map("zinc_mg") @db.Decimal(8, 2)
+  vitAMcg       Decimal  @default(0) @map("vit_a_mcg") @db.Decimal(8, 2)
+  vitCMg        Decimal  @default(0) @map("vit_c_mg") @db.Decimal(8, 2)
+  omega3G       Decimal  @default(0) @map("omega3_g") @db.Decimal(8, 2)
+  avgCost100g   Decimal  @default(0) @map("avg_cost_per_100g") @db.Decimal(10, 2)
+  allergenTags  String[] @map("allergen_tags") // ['telur', 'seafood', 'susu', 'kacang', 'gluten']
+  sourceRef     String   @default("TKPI Kemenkes 2020") @map("source_ref")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([category])
+  @@map("tkpi_foods")
+}
+
+// 3. Child Anthropometric Measurements (PII Redacted)
+model ChildMeasurement {
+  measurementId      String   @id @default(uuid()) @map("measurement_id") @db.Uuid
+  childAlias         String   @map("child_alias") @db.VarChar(100)
+  gender             String   @db.VarChar(10)
+  birthDate          DateTime @map("birth_date") @db.Date
+  measureDate        DateTime @map("measure_date") @db.Date
+  ageMonths          Int      @map("age_months")
+  weightKg           Decimal  @map("weight_kg") @db.Decimal(5, 2)
+  heightCm           Decimal  @map("height_cm") @db.Decimal(5, 2)
+  headCircCm         Decimal? @map("head_circ_cm") @db.Decimal(5, 2)
+  wazZscore          Decimal? @map("waz_zscore") @db.Decimal(5, 2)
+  hazZscore          Decimal? @map("haz_zscore") @db.Decimal(5, 2)
+  whzZscore          Decimal? @map("whz_zscore") @db.Decimal(5, 2)
+  nutritionalStatus  String?  @map("nutritional_status") @db.VarChar(50)
+  posyanduRtRw       String?  @map("posyandu_rt_rw") @db.VarChar(100)
+  is2tAlert          Boolean  @default(false) @map("is_2t_alert")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@index([childAlias, measureDate])
+  @@map("child_measurements")
+}
